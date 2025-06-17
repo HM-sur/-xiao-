@@ -92,6 +92,7 @@
 
 | 设备      | 接口         | 说明         |
 |---------|------------|------------|
+| xiao esp32c3 | WiFi AP | AP模式，无需外部路由器，所有设备连接到 c3 |
 | OLED    | I2C        | 显示菜单     |
 | 摇杆    | GPIO       | 菜单切换/控制  |
 | 电池    | 3.3V       | 供电         |
@@ -167,6 +168,7 @@
 | 设备          | 接口         | 说明         |
 |--------------|--------------|----------------|
 | xiao esp32s3 | WiFi station | 连接主控 AP     |
+| LED驱动板     | GPIO         | 驱动LED灯带     |
 | LED灯带       | GPIO         | WS2812/APA102等 |
 | 电源          | USB/3.3V     | 供电            |
 
@@ -227,7 +229,8 @@
 | 设备          | 接口         | 说明         |
 |--------------|--------------|----------------|
 | xiao esp32c6 | WiFi station | 连接主控 AP     |
-| 风扇          | GPIO         | 电机驱动模块    |
+| 电机驱动板     | GPIO         | 控制电机转动    |
+| 风扇          | GPIO         | 转动           |
 | 电源          | USB/3.3V     | 供电            |
 
 <div align="center">
@@ -330,6 +333,7 @@
 | 设备          | 接口         | 说明         |
 |--------------|--------------|----------------|
 | xiao esp32s3 | WiFi station | 连接主控 AP     |
+| 圆形显示屏拓展板 | GPIO   | 显示空调界面     |
 | 电源          | USB/3.3V     | 供电            |
 
 <div align="center">
@@ -344,6 +348,9 @@
   - 支持 WiFi station 功能，轻松接入主控 AP
   - 丰富的 GPIO 支持多种外设扩展
   - [在 Seeed Bazaar 购买 xiao esp32s3](https://www.seeedstudio.com/Seeed-XIAO-ESP32S3-p-5620.html)
+- **圆形显示屏拓展板**
+  - 通过 GPIO 控制空调开关与温度调节
+  - [在 Seeed Bazaar 购买圆形显示屏拓展板](https://www.seeedstudio.com/Seeed-XIAO-Expansion-board-p-5201.html)
 - **电源**
   - USB/3.3V 供电，便于部署
 
