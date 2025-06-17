@@ -130,7 +130,9 @@ STATUS_LED:ON
   <img src="./images/xiao_esp32c3.png" alt="xiao_esp32c3引脚图" width="500"/>
 </div>
 
-*主控模块引脚图*
+<div align="center">
+主控模块引脚图
+</div>
 
 - **xiao 拓展部件**
   - OLED 屏幕：用于菜单显示和状态反馈
@@ -141,7 +143,9 @@ STATUS_LED:ON
   <img src="./images/xiao_expansion_board.png" alt="xiao_扩展板图" width="500"/>
 </div>
 
-*主控模块扩展板引脚图*
+<div align="center">
+主控模块扩展板引脚图
+</div>
 
 - **Grove-摇杆**
   - 通过模拟信号（ADC）与主控连接，实现方向和按压操作
@@ -184,6 +188,9 @@ switch (menuId) {
   <img src="./images/main_demo.gif" alt="主控模块演示" width="360"/>
 </div>
 
+<div align="center">
+主控demo演示
+</div>
 ---
 
 ### 3.2 LED 灯带模块（xiao esp32s3）
@@ -220,7 +227,9 @@ LED灯带模块硬件连接示意图
   <img src="./images/xiao_esp32s3.png" alt="xiao_esp32s3引脚图" width="500"/>
 </div>
 
-*主控模块引脚图*
+<div align="center">
+主控模块引脚图
+</div>
 
 - **WS2812B LED灯带**
   - 多彩可编程 LED 灯带，支持多种灯效
@@ -256,6 +265,10 @@ if (strcmp(incomingPacket, "LED_ON") == 0) {
 
 <div align="center">
   <img src="./images/led_demo.gif" alt="LED灯带模块演示" width="360"/>
+</div>
+
+<div align="center">
+LED灯带demo演示
 </div>
 
 ---
@@ -294,7 +307,9 @@ if (strcmp(incomingPacket, "LED_ON") == 0) {
   <img src="./images/xiao_esp32c6.png" alt="xiao_esp32c6引脚图" width="500"/>
 </div>
 
-*风扇模块引脚图*
+<div align="center">
+风扇模块引脚图
+</div>
 
 - **风扇/电机驱动模块**
   - 可通过 GPIO 控制风扇启停及档位
@@ -326,6 +341,10 @@ if (strcmp(incomingPacket, "FAN_ON") == 0) {
   <img src="./images/fan_demo.gif" alt="风扇模块演示" width="360"/>
 </div>
 
+<div align="center">
+风扇demo演示
+</div>
+
 ---
 
 ### 3.4 继电器/磁吸门锁模块（xiao esp32c6）
@@ -349,6 +368,10 @@ if (strcmp(incomingPacket, "FAN_ON") == 0) {
 
 <div align="center">
 继电器/磁吸门锁模块硬件连接示意图
+</div>
+
+<div align="center">
+继电器/磁吸门锁模块demo演示
 </div>
 
 #### 📦 硬件介绍
@@ -406,6 +429,10 @@ if (strcmp(incomingPacket, "FAN_ON") == 0) {
 
 <div align="center">
 空调控制模块硬件连接示意图
+</div>
+
+<div align="center">
+空调控制demo演示
 </div>
 
 #### 📦 硬件介绍
