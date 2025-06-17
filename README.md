@@ -110,12 +110,18 @@
   - 丰富的 GPIO 引脚，支持多种外设扩展
   - 集成 ADC，可采集模拟信号，适合传感器输入
   - [在 Seeed Bazaar 购买 xiao esp32c3](https://www.seeedstudio.com/Seeed-XIAO-ESP32C3-p-5431.html)
+<div align="center">
+  <img src="./images/xiao_esp32c3.png" alt="xiao_esp32c3引脚图" width="500"/>
+</div>
 
 - **xiao 拓展部件**
   - OLED 屏幕：用于菜单显示和状态反馈
   - 电池接口：支持锂电池供电，便于移动应用
   - 蜂鸣器：可用于声音提示和报警
   - [在 Seeed Bazaar 购买 xiao 扩展板](https://www.seeedstudio.com/Seeed-XIAO-Expansion-board-p-5201.html)
+<div align="center">
+  <img src="./images/xiao_expansion_board.png" alt="xiao_扩展板图" width="500"/>
+</div>
 
 - **Grove-摇杆**
   - 通过模拟信号（ADC）与主控连接，实现方向和按压操作
@@ -184,6 +190,10 @@
   - 支持 WiFi station 功能，轻松接入主控 AP
   - 丰富的 GPIO 支持多种外设扩展
   - [在 Seeed Bazaar 购买 xiao esp32s3](https://www.seeedstudio.com/Seeed-XIAO-ESP32S3-p-5620.html)
+<div align="center">
+  <img src="./images/xiao_esp32s3.png" alt="xiao_esp32s3引脚图" width="500"/>
+</div>
+
 - **WS2812B LED灯带**
   - 多彩可编程 LED 灯带，支持多种灯效
   - [在 Seeed Bazaar 购买 WS2812 灯带](https://www.seeedstudio.com/WS2812-LED-Strip-144-LED-m-1m-Black-p-3168.html)
@@ -245,6 +255,10 @@
   - 支持 WiFi station 功能，轻松接入主控 AP
   - 丰富的 GPIO 支持多种外设扩展
   - [在 Seeed Bazaar 购买 xiao esp32c6](https://www.seeedstudio.com/Seeed-XIAO-ESP32C6-p-5635.html)
+<div align="center">
+  <img src="./images/xiao_esp32c6.png" alt="xiao_esp32c6引脚图" width="500"/>
+</div>
+
 - **风扇/电机驱动模块**
   - 可通过 GPIO 控制风扇启停及档位
   - 用户可根据需求选择风扇或电机驱动模块
