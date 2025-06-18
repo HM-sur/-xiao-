@@ -125,32 +125,49 @@ STATUS_LED:ON
   - 支持 WiFi AP（热点）功能，可作为局域网中心节点
   - 丰富的 GPIO 引脚，支持多种外设扩展
   - 集成 ADC，可采集模拟信号，适合传感器输入
-  - [在 Seeed Bazaar 购买 xiao esp32c3](https://www.seeedstudio.com/Seeed-XIAO-ESP32C3-p-5431.html)
+  - [在 Seeed Bazaar 购买 xiao esp32c3](https://www.seeedstudio.com/Seeed-Studio-XIAO-ESP32C3-Tape-Reel-p-6471.html)
 <div align="center">
   <img src="./images/xiao_esp32c3.png" alt="xiao_esp32c3引脚图" width="500"/>
 </div>
 
 <div align="center">
-主控模块引脚图
+xiao esp32c3引脚图
 </div>
 
 - **xiao 拓展部件**
   - OLED 屏幕：用于菜单显示和状态反馈
+    - 工作原理：主控（xiao esp32c3）通过 I2C 接口向 OLED 发送命令和数据，控制像素点的显示状态，进而显示菜单、图标或文字。
+
   - 电池接口：支持锂电池供电，便于移动应用
-  - 蜂鸣器：可用于声音提示和报警
-  - [在 Seeed Bazaar 购买 xiao 扩展板](https://www.seeedstudio.com/Seeed-XIAO-Expansion-board-p-5201.html)
+  
+  - 蜂鸣器：用于声音提示和报警
+    - 工作原理：通过控制引脚输出高电平，使蜂鸣器发出声音。
+  - [在 Seeed Bazaar 购买 xiao 扩展板](https://www.seeedstudio.com/Seeeduino-XIAO-Expansion-board-p-4746.html)
 <div align="center">
   <img src="./images/xiao_expansion_board.png" alt="xiao_扩展板图" width="500"/>
 </div>
 
 <div align="center">
-主控模块扩展板引脚图
+xiao_扩展板图
 </div>
 
 - **Grove-摇杆**
-  - 通过模拟信号（ADC）与主控连接，实现方向和按压操作
-  - 用于菜单切换和控制各节点设备
-  - [在 Seeed Bazaar 购买 Grove-摇杆](https://www.seeedstudio.com/Grove-Joystick-p-756.html)
+  - 采用三路电位器结构，X轴、Y轴、按键（SW）均输出模拟电压信号，通过ADC引脚（如A0、A1）读取
+  - 常用于菜单切换、方向控制等人机交互场景
+
+| 功能       | 输出类型   | 典型引脚      | 电压区间与判定说明                                   |
+|------------|------------|---------------|------------------------------------------------------|
+| X 轴       | 模拟电压   | A0（ADC）     | 0~1.2V为左，1.2~3.4V为右                             |
+| Y 轴       | 模拟电压   | A1（ADC）     | 0~1.2V为上，1.2~3.4V为下                             |
+| 按键（SW） | 模拟电压   | A0/A1（ADC）  | 3.8V以上为按键按下                                   |
+
+  - [在 Seeed Bazaar 购买 Grove-摇杆](https://www.seeedstudio.com/Grove-Thumb-Joystick.html)
+
+<div align="center">
+  <img src="./images/joystick.png" alt="摇杆图" width="420"/>
+  <br>
+  <span style="font-size:14px;color:#666;">摇杆图</span>
+</div>
 
 **控制示例代码（主控发送UDP协议指令）**
 ```cpp
@@ -222,7 +239,7 @@ LED灯带模块硬件连接示意图
 - **xiao esp32s3**
   - 支持 WiFi station 功能，轻松接入主控 AP
   - 丰富的 GPIO 支持多种外设扩展
-  - [在 Seeed Bazaar 购买 xiao esp32s3](https://www.seeedstudio.com/Seeed-XIAO-ESP32S3-p-5620.html)
+  - [在 Seeed Bazaar 购买 xiao esp32s3](https://www.seeedstudio.com/Seeed-Studio-XIAO-ESP32S3-Pre-Soldered-p-6334.html)
 <div align="center">
   <img src="./images/xiao_esp32s3.png" alt="xiao_esp32s3引脚图" width="500"/>
 </div>
@@ -232,8 +249,31 @@ LED灯带模块硬件连接示意图
 </div>
 
 - **WS2812B LED灯带**
-  - 多彩可编程 LED 灯带，支持多种灯效
-  - [在 Seeed Bazaar 购买 WS2812 灯带](https://www.seeedstudio.com/WS2812-LED-Strip-144-LED-m-1m-Black-p-3168.html)
+  - WS2812B 是集成驱动的智能全彩 LED，每颗灯珠包含 RGB 三色 LED 和驱动电路，多个 WS2812B 可串联组成灯带，支持逐颗编程控制，实现炫彩动态效果。
+  - 接口说明：  
+    - VCC（红线）：5V 供电  
+    - GND（黑线）：地  
+    - DIN（绿线）：单线串行控制信号输入
+  - 工作原理：  
+    - 采用单线串行协议，主控（xiao esp32s3）以 800kHz PWM 数据流写入全部 RGB 数据，第一个 WS2812B 依次转发后续数据，实现级联控制。  
+    - 每颗像素 3 字节（R/G/B），可实现高速动画和丰富灯效。
+  - [在 Seeed Bazaar 购买 WS2812 灯带](https://www.seeedstudio.com/WS2813B-Digital-RGB-LED-Flexi-Strip-60-LED-1-Meter-p-2817.html)
+
+- **xiao-LED驱动板**
+  - 该扩展板用于直接驱动 WS2812 灯带，集成电源稳压与信号缓冲，确保兼容性和可靠性。
+  - 功能说明：  
+    - 内置电平转换器，将 xiao esp32s3 的 3.3V 数字信号提升至 5V，保证 WS2812 灯带可靠响应  
+    - 提供大电流供电电路，满足多颗 LED 同时点亮的电流需求
+  - 控制方式：  
+    - 灯带数据线连接 xiao esp32s3 的 GPIO（A4），通过库函数控制每颗 LED 的颜色和亮度（strip.setPixelColor(i, color)）
+  - [在 Seeed Bazaar 购买 xiao-LED驱动板](https://www.seeedstudio.com/LED-Driver-Board-for-Seeed-Studio-XIAO-p-6451.html)
+
+<div align="center">
+  <img src="./images/xiao_led_driver.png" alt="xiao-LED驱动板实物图" width="420"/>
+  <br>
+  <span style="font-size:14px;color:#666;">xiao-LED驱动板实物图</span>
+</div>
+
 - **电源**
   - USB/3.3V/3.7V锂电池供电，便于部署
 
@@ -302,18 +342,36 @@ LED灯带demo演示
 - **xiao esp32c6**
   - 支持 WiFi station 功能，轻松接入主控 AP
   - 丰富的 GPIO 支持多种外设扩展
-  - [在 Seeed Bazaar 购买 xiao esp32c6](https://www.seeedstudio.com/Seeed-XIAO-ESP32C6-p-5635.html)
+  - [在 Seeed Bazaar 购买 xiao esp32c6](https://www.seeedstudio.com/Seeed-Studio-XIAO-ESP32C6-Pre-Soldered-p-6328.html)
 <div align="center">
   <img src="./images/xiao_esp32c6.png" alt="xiao_esp32c6引脚图" width="500"/>
 </div>
 
 <div align="center">
-风扇模块引脚图
+xiao_esp32c6引脚图
 </div>
 
-- **风扇/电机驱动模块**
+- **电机驱动模块**
+  - Grove Mini Fan v1.1，核心为 N 沟 MOSFET + 小型直流风扇
+  - Grove 标准 4-pin 接口（实际只用 VCC + 控制引脚），典型 5V 供电（3.3V可用但转速降低）
+  - 工作原理：  
+    - 主控通过 GPIO 控制 MOSFET 栅极，实现对风扇的电子开关控制
+    - HIGH（1）：MOSFET 导通，风扇转动  
+    - LOW（0）：MOSFET 截止，风扇停止
+    - 类似继电器，但速度更快、体积更小
+  - [在 Seeed Bazaar 购买 Grove-电机驱动模块](https://www.seeedstudio.com/Grove-Mini-Fan-v1-1.html)
+<div align="center">
+  <img src="./images/motor_driver.png" alt="电机驱动模块图" width="420"/>
+  <br>
+  <span style="font-size:14px;color:#666;">电机驱动模块图</span>
+</div>
+
+- **风扇**
+  - 支持两种控制方式：  
+    1. 启停控制（数字控制）：GPIO 输出 HIGH/LOW 控制风扇开/关  
+    2. 档位控制（PWM 控速）：如风扇支持，可用 analogWrite()/ledcWrite() 实现不同转速档位
   - 可通过 GPIO 控制风扇启停及档位
-  - 用户可根据需求选择风扇或电机驱动模块
+
 - **电源**
   - USB/3.3V 供电，便于部署
 
@@ -379,10 +437,46 @@ if (strcmp(incomingPacket, "FAN_ON") == 0) {
 - **xiao esp32c6**
   - 支持 WiFi station 功能，轻松接入主控 AP
   - 丰富的 GPIO 支持多种外设扩展
-  - [在 Seeed Bazaar 购买 xiao esp32c6](https://www.seeedstudio.com/Seeed-XIAO-ESP32C6-p-5635.html)
-- **Grove 继电器/磁吸门锁**
-  - 通过 GPIO 控制门锁或其他用电设备
-  - [在 Seeed Bazaar 购买 Grove 继电器](https://www.seeedstudio.com/Grove-Relay-p-769.html)
+  - [在 Seeed Bazaar 购买 xiao esp32c6](https://www.seeedstudio.com/Seeed-Studio-XIAO-ESP32C6-Pre-Soldered-p-6328.html)
+
+- **Grove 继电器**
+  - 主控侧通过 Grove 接口 SIG 脚接收 3.3V/5V 控制信号，内部集成 NPN 晶体管或 MOSFET 与反向保护二极管，驱动继电器线圈。
+  - 负载侧提供 NO（常开）、NC（常闭）、COM（公共端）三端子，可安全切换高压/大电流设备，实现主控与负载物理隔离。
+  - [在 Seeed Bazaar 购买 Grove 继电器](https://www.seeedstudio.com/Relay-add-on-module-for-XIAO-p-6310.html)
+
+  **工作机制：**
+
+  | 控制引脚状态 | 继电器状态   | 负载连接                |
+  |--------------|--------------|-------------------------|
+  | LOW（默认）  | 继电器释放   | NO 断开（设备关闭）      |
+  | HIGH（3.3/5V）| 继电器吸合  | NO → COM 接通（设备开启）|
+
+  主控 GPIO 输出 HIGH，SIG 脚导通，继电器吸合，安全控制高压电路。
+
+<div align="center">
+  <img src="./images/relay.png" alt="继电器模块图" width="420"/>
+  <br>
+  <span style="font-size:14px;color:#666;">继电器模块图</span>
+</div>
+
+- **Grove 磁吸门锁**
+  - 内部为电磁铁，通电后产生磁力吸附门闩或铁片，实现上锁。多数为“通电上锁，断电解锁”（Fail-safe），适合门禁与紧急安全系统。
+  - 通过 Grove 继电器切换门锁电源通断，实现门的开/关。门锁需 12V 或更高电压，必须通过继电器切换，主控不能直接供电。
+  - [在 Seeed Bazaar 购买 Grove 磁吸门锁](https://www.seeedstudio.com/Grove-Electromagnet.html)
+
+  **控制逻辑：**
+
+  | 电源状态 | 门锁状态     |
+  |----------|--------------|
+  | 通电     | 吸附锁定     |
+  | 断电     | 失电解锁     |
+
+<div align="center">
+  <img src="./images/door_lock.png" alt="磁吸门锁模块图" width="420"/>
+  <br>
+  <span style="font-size:14px;color:#666;">磁吸门锁模块图</span>
+</div>
+
 - **电源**
   - USB/3.3V 供电，便于部署
 
@@ -440,10 +534,27 @@ if (strcmp(incomingPacket, "FAN_ON") == 0) {
 - **xiao esp32s3**
   - 支持 WiFi station 功能，轻松接入主控 AP
   - 丰富的 GPIO 支持多种外设扩展
-  - [在 Seeed Bazaar 购买 xiao esp32s3](https://www.seeedstudio.com/Seeed-XIAO-ESP32S3-p-5620.html)
+  - [在 Seeed Bazaar 购买 xiao esp32s3](https://www.seeedstudio.com/Seeed-Studio-XIAO-ESP32S3-Pre-Soldered-p-6334.html)
+
 - **圆形显示屏拓展板**
-  - 通过 GPIO 控制空调开关与温度调节
-  - [在 Seeed Bazaar 购买圆形显示屏拓展板](https://www.seeedstudio.com/Seeed-XIAO-Expansion-board-p-5201.html)
+  - 由 Seeed 专为 XIAO 系列（ESP32S3/C3/NRF）设计，集成多种功能组件，便于空调等智能家居场景开发。
+  - [在 Seeed Bazaar 购买圆形显示屏拓展板](https://www.seeedstudio.com/Seeed-Studio-Round-Display-for-XIAO-p-5638.html)
+
+  **主要硬件组成：**
+
+  | 组件                   | 功能说明                                   | 用于空调控制中作用                        |
+  |------------------------|--------------------------------------------|-------------------------------------------|
+  | 1.28 英寸圆形触控屏    | 240×240 全彩显示，支持电容触控（FT6236）   | 显示空调开关状态、当前温度、操作界面等    |
+  | FT6236 电容触控芯片    | 多点触控，I2C 接口                         | 实现用户点击“开/关”、“温度调节”功能      |
+  | 电源电路               | 支持 USB/锂电/3.3V 输入，充电管理           | 稳定供电给 XIAO 与屏幕                    |
+  | 扩展接口               | 多组 Grove、GPIO、I2C/SPI 排针              | 可连接继电器、温度传感器、蜂鸣器等         |
+  | 其他                   | 电池接口、稳压芯片等                       | 支持便携部署、移动供电                    |
+
+  **显示与触控原理：**
+  - 屏幕采用 GC9A01 驱动，通过 SPI 与 XIAO 通信。
+  - 支持 lvgl、TFT_eSPI、Adafruit_GFX 等图形库进行界面绘制。
+  - 显示内容可包括当前温度（如 26°C）、空调状态（ON/OFF）、升/降温按钮图标（+ / -）等。
+
 - **电源**
   - USB/3.3V 供电，便于部署
 

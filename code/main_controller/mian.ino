@@ -8,6 +8,8 @@
 // OLED（全缓存模式，硬件 I2C）
 U8G2_SSD1306_128X64_NONAME_F_HW_I2C u8g2(U8G2_R0, /* reset=*/ U8X8_PIN_NONE);
 
+#define BUZZER_PIN D7
+
 // 摇杆（模拟量）和退出键 PIN 定义
 const int JOY_PIN   = A0;  // 摇杆信号接 A0
 const int BTN_EXIT  = D1;  // 退出按键接 D1
@@ -30,39 +32,39 @@ WiFiUDP udp;
 const int udpPort    = 1234;
 
 // ===== 菜单系统 =====
-const uint8_t MENU_COUNT = 4;
-const char* menuTitles[MENU_COUNT] = { "AP 信息", "LED", "Delay", "Fan" };
+// 主菜单 5 项，新增 "AC"
+const uint8_t MENU_COUNT = 5;
+const char* menuTitles[MENU_COUNT] = { "AP 信息", "LED", "Delay", "Fan", "AC" };
 
-uint8_t currentMenu = 0;   // 主菜单索引 0–3
-uint8_t depth       = 0;   // 0=主列表, 1=子菜单
+uint8_t currentMenu = 0;   // 主菜单索引 0–4
+uint8_t depth       = 0;   // 0=主菜单,1=二级,2=三级
 
-// 子菜单选项索引（LED 多于2项，需分页）
-// subOption = 当前选中的菜单项（0~2）
-// ledPage = LED子菜单当前显示页（0 或 1）
-uint8_t subOption = 0;   
-uint8_t ledPage   = 0;   // 新增变量，LED菜单分页
+uint8_t subOption = 0;   // 当前层选项索引
+uint8_t ledPage   = 0;   // LED 子菜单分页（0 或 1）
+uint8_t acPage = 0;
 
 void setup() {
   Serial.begin(115200);
   pinMode(BTN_EXIT, INPUT_PULLUP);
 
+  pinMode(BUZZER_PIN, OUTPUT);
+  digitalWrite(BUZZER_PIN, LOW);
+
   // OLED 初始化
   u8g2.begin();
-  u8g2.setFont(u8g2_font_ncenB14_tr); // 大字体，一屏3行
+  u8g2.setFont(u8g2_font_ncenB14_tr);
 
-  // 启动 WiFi AP
+  // 启动 AP
   WiFi.softAP(ssid, password);
   delay(500);
   Serial.print("AP IP: "); Serial.println(WiFi.softAPIP());
 
-  // 首次绘制
   drawMenu();
 }
 
 void loop() {
   unsigned long now = millis();
-
-  // —— UDP 广播（保活或测试）——  
+  // UDP 心跳
   if (now - lastBroadcast > 1000) {
     lastBroadcast = now;
     udp.beginPacket("192.168.4.255", udpPort);
@@ -70,149 +72,256 @@ void loop() {
     udp.endPacket();
   }
 
-  // —— 读取摇杆 & 按键 ——  
   int v = analogRead(JOY_PIN);
-  bool exitPressed = (digitalRead(BTN_EXIT) == LOW);
+  bool backPressed = (digitalRead(BTN_EXIT) == LOW);
 
   if (now - lastJoyMove > DEBOUNCE) {
     if (depth == 0) {
-      // 主菜单导航
+      // 主菜单
       if (v < TH_DOWN_LOW) {
         currentMenu = (currentMenu + 1) % MENU_COUNT;
         drawMenu();
         lastJoyMove = now;
-      }
-      else if (v > TH_UP_LOW && v < TH_UP_HIGH) {
+      } else if (v > TH_UP_LOW && v < TH_UP_HIGH) {
         currentMenu = (currentMenu + MENU_COUNT - 1) % MENU_COUNT;
         drawMenu();
         lastJoyMove = now;
-      }
-      else if (v > TH_ENTER) {
-        // 进入子菜单
+      } else if (v > TH_ENTER) {
         depth = 1;
         subOption = 0;
-        ledPage = 0;           // 进入LED菜单时重置分页
+        ledPage = 0;
         drawMenu();
         lastJoyMove = now;
       }
-    } else {
-      // 子菜单导航
+    }
+    else if (depth == 1) {
+      // 二级菜单
       if (currentMenu == 1) {
-        // LED 子菜单多项处理（3项分页显示，每页2项）
-        const uint8_t totalItems = 3;
-        const uint8_t pageSize = 2;
-
+        // LED 子菜单分页逻辑 (3 项分两页)
+        const uint8_t total = 3, pageSize = 2;
         if (v < TH_DOWN_LOW) {
-          // 下移
-          subOption = (subOption + 1) % totalItems;
-          ledPage = subOption / pageSize;  // 自动翻页
-          drawMenu();
-          lastJoyMove = now;
-        }
-        else if (v > TH_UP_LOW && v < TH_UP_HIGH) {
-          // 上移
-          subOption = (subOption + totalItems - 1) % totalItems;
+          subOption = (subOption + 1) % total;
           ledPage = subOption / pageSize;
           drawMenu();
           lastJoyMove = now;
-        }
-        else if (v > TH_ENTER) {
-          sendProtocol(currentMenu, subOption);
+        } else if (v > TH_UP_LOW && v < TH_UP_HIGH) {
+          subOption = (subOption + total - 1) % total;
+          ledPage = subOption / pageSize;
+          drawMenu();
+          lastJoyMove = now;
+        } else if (v > TH_ENTER) {
+          depth = 2;
+          subOption = subOption % 2;  // 进入页内第一项或第二项
+          drawMenu();
           lastJoyMove = now;
         }
-      } else {
-        // 其他子菜单只有两项，保持不变
+      }
+      else if (currentMenu == 4) {
+        // AC 二级 (Switch/Temp)
         if (v < TH_DOWN_LOW) {
           subOption = (subOption + 1) % 2;
           drawMenu();
           lastJoyMove = now;
-        }
-        else if (v > TH_UP_LOW && v < TH_UP_HIGH) {
+        } else if (v > TH_UP_LOW && v < TH_UP_HIGH) {
           subOption = (subOption + 2 - 1) % 2;
           drawMenu();
           lastJoyMove = now;
-        }
-        else if (v > TH_ENTER) {
-          sendProtocol(currentMenu, subOption);
+        } else if (v > TH_ENTER) {
+          depth = 2;
+          acPage = subOption;
+          drawMenu();
           lastJoyMove = now;
         }
+      }
+      else {
+          // Delay/Fan 子菜单
+  if (v < TH_DOWN_LOW) {
+    subOption = (subOption + 1) % 2;
+    drawMenu();
+    lastJoyMove = now;
+  } else if (v > TH_UP_LOW && v < TH_UP_HIGH) {
+    subOption = (subOption + 2 - 1) % 2;
+    drawMenu();
+    lastJoyMove = now;
+  } else if (v > TH_ENTER) {
+    // ✅ 修改：直接发送 UDP，不进入 depth=2
+    sendProtocol(currentMenu, subOption, 0);  // page=0 仅作占位
+    beep();
+    lastJoyMove = now;
+  }
+      }
+    }
+    else {
+      // depth == 2, 三级菜单
+      if (v < TH_DOWN_LOW) {
+        subOption = (subOption + 1) % 2;
+        drawMenu();
+        lastJoyMove = now;
+      } else if (v > TH_UP_LOW && v < TH_UP_HIGH) {
+        subOption = (subOption + 1) % 2;
+        drawMenu();
+        lastJoyMove = now;
+      } else if (v > TH_ENTER) {
+        uint8_t page = (currentMenu == 4) ? acPage : ledPage;
+sendProtocol(currentMenu, subOption, page);
+        lastJoyMove = now;
       }
     }
   }
 
-  // 退出至主菜单
-  if (exitPressed) {
-    if (depth == 1) {
+  // 退出键
+  if (backPressed) {
+    if (depth == 2) {
+      depth = 1;
+    } else if (depth == 1) {
       depth = 0;
-      drawMenu();
     }
-    // 等待松手防抖
-    while (digitalRead(BTN_EXIT) == LOW) { delay(10); }
+    subOption = 0;
+    drawMenu();
+    while (digitalRead(BTN_EXIT) == LOW) delay(10);
     lastJoyMove = now;
   }
 }
 
-// 绘制当前菜单（主或子）
 void drawMenu() {
   u8g2.clearBuffer();
 
   if (depth == 0) {
-    // 主菜单，一屏最多 3 项
+    // 主菜单
     int start = currentMenu;
     if (start > MENU_COUNT - 3) start = MENU_COUNT - 3;
     if (start < 0) start = 0;
     for (int i = 0; i < 3; i++) {
-      int idx = start + i;
+      int idx = start + i, y = i*21 + 16;
       if (idx == currentMenu) {
-        u8g2.drawBox(0, i*21, 128, 21);
+        u8g2.drawBox(0, y-14, 128, 21);
         u8g2.setDrawColor(0);
-        u8g2.drawStr(2, i*21 + 16, menuTitles[idx]);
+        u8g2.drawStr(2, y, menuTitles[idx]);
         u8g2.setDrawColor(1);
       } else {
-        u8g2.drawStr(2, i*21 + 16, menuTitles[idx]);
+        u8g2.drawStr(2, y, menuTitles[idx]);
       }
     }
-  } else {
-    // 子菜单
+  }
+  else if (depth == 1) {
+    // 二级菜单
     if (currentMenu == 0) {
-      // AP 信息
-      IPAddress ip = WiFi.softAPIP();
-      char buf[32];
-      u8g2.drawStr(0, 16, "=== AP 信息 ===");
-      snprintf(buf, sizeof(buf), "SSID:%s", ssid);
-      u8g2.drawStr(0, 34, buf);
-      snprintf(buf, sizeof(buf), "IP:  %s", ip.toString().c_str());
-      u8g2.drawStr(0, 52, buf);
-    } else if (currentMenu == 1) {
-      // LED 子菜单，多项分页显示，每页显示两项
-      const char* ledOptions[3] = { "ON", "OFF", "Waterfall Light" };
-      const uint8_t pageSize = 2;
-      uint8_t startIndex = ledPage * pageSize;
-
+      IPAddress ip=WiFi.softAPIP();char b[32];
+      u8g2.drawStr(0,16,"=== AP 信息 ===");
+      snprintf(b,32,"SSID:%s",ssid);    u8g2.drawStr(0,34,b);
+      snprintf(b,32,"IP:  %s",ip.toString().c_str());u8g2.drawStr(0,52,b);
+    }
+    else if (currentMenu == 1) {
+      // LED 子菜单，分页显示 2 项
+      const char* opts[3] = { "ON", "OFF", "Waterfall Light" };
+      uint8_t pageSize = 2, startIdx = ledPage * pageSize;
       for (int i = 0; i < pageSize; i++) {
-        int itemIndex = startIndex + i;
-        if (itemIndex >= 3) break; // 防止越界
-
-        if (itemIndex == subOption) {
-          u8g2.drawBox(0, i*32, 128, 32);
+        int idx = startIdx + i, y = i*32 + 24;
+        if (idx >= 3) break;
+        if (idx == subOption) {
+          u8g2.drawBox(0, y-16, 128, 32);
           u8g2.setDrawColor(0);
-          u8g2.drawStr(2, i*32 + 24, ledOptions[itemIndex]);
+          u8g2.drawStr(2, y, opts[idx]);
           u8g2.setDrawColor(1);
         } else {
-          u8g2.drawStr(2, i*32 + 24, ledOptions[itemIndex]);
+          u8g2.drawStr(2, y, opts[idx]);
         }
       }
-    } else {
-      // Delay 和 Fan 子菜单，保持原样（两项）
-      const char* opts[2] = { " ON", " OFF" };
+    }
+    else if (currentMenu == 4) {
+      // AC 二级菜单
+      const char* acOpts[2] = { "Switch", "Temp" };
       for (int i = 0; i < 2; i++) {
+        int y = i*32 + 24;
         if (i == subOption) {
-          u8g2.drawBox(0, i*32, 128, 32);
+          u8g2.drawBox(0, y-16, 128, 32);
           u8g2.setDrawColor(0);
-          u8g2.drawStr(2, i*32 + 24, opts[i]);
+          u8g2.drawStr(2, y, acOpts[i]);
           u8g2.setDrawColor(1);
         } else {
-          u8g2.drawStr(2, i*32 + 24, opts[i]);
+          u8g2.drawStr(2, y, acOpts[i]);
+        }
+      }
+    }
+    else {
+      // Delay / Fan 二级菜单
+      const char* opts[2] = { " ON", " OFF" };
+      for (int i = 0; i < 2; i++) {
+        int y = i*32 + 24;
+        if (i == subOption) {
+          u8g2.drawBox(0, y-16, 128, 32);
+          u8g2.setDrawColor(0);
+          u8g2.drawStr(2, y, opts[i]);
+          u8g2.setDrawColor(1);
+        } else {
+          u8g2.drawStr(2, y, opts[i]);
+        }
+      }
+    }
+  }
+  else {
+    // 三级菜单
+    if (currentMenu == 1) {
+      // LED 三级保持原逻辑
+      const char* opts[2] = { "ON", "OFF" };
+      for (int i = 0; i < 2; i++) {
+        int y = i*32 + 24;
+        if (i == subOption) {
+          u8g2.drawBox(0, y-16, 128, 32);
+          u8g2.setDrawColor(0);
+          u8g2.drawStr(2, y, opts[i]);
+          u8g2.setDrawColor(1);
+        } else {
+          u8g2.drawStr(2, y, opts[i]);
+        }
+      }
+    }
+    else if (currentMenu == 4) {
+      // AC 三级菜单
+      if (subOption < 2 && depth == 2) {
+        if (acPage == 0) {
+          // Switch -> ON/OFF
+          const char* sw[2] = { "ON", "OFF" };
+          for (int i = 0; i < 2; i++) {
+            int y = i*32 + 24;
+            if (i == subOption) {
+              u8g2.drawBox(0, y-16, 128, 32);
+              u8g2.setDrawColor(0);
+              u8g2.drawStr(2, y, sw[i]);
+              u8g2.setDrawColor(1);
+            } else {
+              u8g2.drawStr(2, y, sw[i]);
+            }
+          }
+        } else {
+          // Temp -> + / -
+          const char* tp[2] = { "+", "-" };
+          for (int i = 0; i < 2; i++) {
+            int y = i*32 + 24;
+            if (i == subOption) {
+              u8g2.drawBox(0, y-16, 128, 32);
+              u8g2.setDrawColor(0);
+              u8g2.drawStr(2, y, tp[i]);
+              u8g2.setDrawColor(1);
+            } else {
+              u8g2.drawStr(2, y, tp[i]);
+            }
+          }
+        }
+      }
+    }
+    else {
+      // Delay / Fan 三级菜单保持原样
+      const char* opts[2] = { "ON", "OFF" };
+      for (int i = 0; i < 2; i++) {
+        int y = i*32 + 24;
+        if (i == subOption) {
+          u8g2.drawBox(0, y-16, 128, 32);
+          u8g2.setDrawColor(0);
+          u8g2.drawStr(2, y, opts[i]);
+          u8g2.setDrawColor(1);
+        } else {
+          u8g2.drawStr(2, y, opts[i]);
         }
       }
     }
@@ -221,30 +330,34 @@ void drawMenu() {
   u8g2.sendBuffer();
 }
 
-// 根据菜单 ID 和 subOption 发送对应广播协议
-void sendProtocol(uint8_t menuId, uint8_t opt) {
+void sendProtocol(uint8_t menuId, uint8_t opt, uint8_t page) {
   const char* payload = nullptr;
-
-  switch (menuId) {
-    case 1: // LED
-      if (opt == 0) payload = "LED_ON";
-      else if (opt == 1) payload = "LED_OFF";
-      else if (opt == 2) payload = "WATERFALL_LIGHT";
-      break;
-    case 2: // Delay
-      payload = (opt == 0) ? "DELAY_ON" : "DELAY_OFF";
-      break;
-    case 3: // Fan
-      payload = (opt == 0) ? "FAN_ON" : "FAN_OFF";
-      break;
-    default:
-      return;  // AP 信息不发送
+  if (menuId == 4) {
+    // AC
+    if (page == 0) { // Switch
+      payload = (opt == 0) ? "AIR_ON" : "AIR_OFF"; beep();
+    } else {        // Temp
+      payload = (opt == 0) ? "AIR_UP"   : "AIR_DOWN"; beep();
+    }
+  } else {
+    // 保留原有其他菜单协议
+    switch (menuId) {
+      case 1: payload = (opt == 0) ? "LED_ON"  : "LED_OFF"; beep(); break;
+      case 2: payload = (opt == 0) ? "DELAY_ON": "DELAY_OFF"; beep(); break;
+      case 3: payload = (opt == 0) ? "FAN_ON"  : "FAN_OFF"; beep(); break;
+    }
   }
+  if (payload) {
+    udp.beginPacket("192.168.4.255", udpPort);
+    udp.print(payload);
+    udp.endPacket();
+    Serial.println(payload);
+  }
+}
 
-  Serial.print("Send protocol: ");
-  Serial.println(payload);
-
-  udp.beginPacket("192.168.4.255", udpPort);
-  udp.print(payload);
-  udp.endPacket();
+void beep() {
+  digitalWrite(BUZZER_PIN, HIGH);
+  Serial.println("beep");
+  delay(100); // 响 100 毫秒
+  digitalWrite(BUZZER_PIN, LOW);
 }
