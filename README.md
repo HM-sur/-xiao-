@@ -428,10 +428,6 @@ if (strcmp(incomingPacket, "FAN_ON") == 0) {
 继电器/磁吸门锁模块硬件连接示意图
 </div>
 
-<div align="center">
-继电器/磁吸门锁模块demo演示
-</div>
-
 #### 📦 硬件介绍
 
 - **xiao esp32c6**
@@ -498,6 +494,10 @@ if (strcmp(incomingPacket, "FAN_ON") == 0) {
 
 <div align="center">
   <img src="./images/relay_demo.gif" alt="继电器/门锁模块演示" width="360"/>
+</div>
+
+<div align="center">
+继电器/磁吸门锁模块demo演示
 </div>
 
 ---
